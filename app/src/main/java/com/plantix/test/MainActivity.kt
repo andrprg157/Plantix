@@ -23,6 +23,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var cityViewModel: CityViewModel
     lateinit var progressBar: ProgressBar
     lateinit var tverror: TextView
+    lateinit var recyclrvw: RecyclerView
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,11 +31,12 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         progressBar = findViewById(R.id.progressbrcity);
         tverror = findViewById(R.id.tverror)
-        val recyclrvw = findViewById<RecyclerView>(R.id.recyclervwcity)
-        val mlayoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
-        recyclrvw.layoutManager = mlayoutManager
+        recyclrvw = findViewById(R.id.recyclervwcity)
         val cityRepositories = CityRepositories(this)
-        cityViewModel = ViewModelProvider(this,CityViewModelFactory(cityRepositories)).get(CityViewModel::class.java)
+        cityViewModel = ViewModelProvider(
+            this,
+            CityViewModelFactory(cityRepositories)
+        ).get(CityViewModel::class.java)
         cityViewModel.cities.observe(this, Observer {
             when (it) {
                 is Response.Loading -> {
@@ -43,14 +45,7 @@ class MainActivity : AppCompatActivity() {
                 is Response.Success -> {
                     it.data?.let {
                         progressBar.visibility = View.INVISIBLE
-                        tverror.visibility = View.INVISIBLE
-                        recyclrvw.visibility = View.VISIBLE
-                        val adapter = CustomAdapter(it)
-                        recyclrvw.adapter = adapter
-                        DividerItemDecoration(
-                            this, // context
-                            mlayoutManager.orientation
-                        ).apply { recyclrvw.addItemDecoration(this) }
+                        initializeView(it)
                     }
                 }
                 is Response.Error -> {
@@ -63,5 +58,18 @@ class MainActivity : AppCompatActivity() {
             }
 
         })
+    }
+
+    fun initializeView(cityList: List<String>) {
+        tverror.visibility = View.INVISIBLE
+        recyclrvw.visibility = View.VISIBLE
+        val mlayoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
+        recyclrvw.layoutManager = mlayoutManager
+        val adapter = CustomAdapter(cityList)
+        recyclrvw.adapter = adapter
+        DividerItemDecoration(
+            this, // context
+            mlayoutManager.orientation
+        ).apply { recyclrvw.addItemDecoration(this) }
     }
 }
